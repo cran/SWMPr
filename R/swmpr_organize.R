@@ -12,35 +12,40 @@
 #' 
 #' @seealso \code{\link{qaqcchk}}
 #' 
+#' @concept organize
+#' 
 #' @details
 #' The qaqc function is a simple screen to retain values from the data with specified QAQC flags, described online: \url{http://cdmo.baruch.sc.edu/data/qaqc.cfm}. Each parameter in the swmpr data typically has a corresponding QAQC column of the same name with the added prefix 'f_'. Values in the QAQC column specify a flag from -5 to 5. Generally, only data with the '0' QAQC flag should be used, which is the default option for the function. Data that do not satisfy QAQC criteria are converted to \code{NA} values. Additionally, simple filters are used to remove obviously bad values, e.g., wind speed values less than zero or pH values greater than 12. Erroneous data entered as -99 are also removed. Processed data will have QAQC columns removed, in addition to removal of values in the actual parameter columns that do not meet the criteria.
 #' 
+#' The data are filtered by matching the flag columns with the character string provided by \code{qaqc_keep}.  A single combined string is created by pasting each element together using the '|' operator, then using partial string matching with \code{\link[base]{grepl}} to compare the actual flags in the QAQC columns.  Values that can be passed to the function are those described online: \url{http://cdmo.baruch.sc.edu/data/qaqc.cfm}.
+#' 
 #' @examples
+#' \dontrun{
 #' ## get data
 #' data(apadbwq)
 #' dat <- apadbwq
 #' 
 #' ## retain only '0' and '-1' flags
-#' qaqc(dat, qaqc_keep = c(0, -1))
+#' qaqc(dat, qaqc_keep = c('0', '-1'))
 #' 
+#' ## retain observations with the 'CSM' error code
+#' qaqc(dat, qaqc_keep = 'CSM')
+#' }
 qaqc <- function(swmpr_in, ...) UseMethod('qaqc')
 
 #' @rdname qaqc
 #' 
-#' @param qaqc_keep numeric vector of qaqc flags to keep, default \code{0}
+#' @param qaqc_keep character string of qaqc flags to keep, default \code{'0'}, any number of flag codes can be supplied including three character error codes (see examples)
 #' @param trace logical for progress output on console, default \code{FALSE}
+#' 
+#' @concept organize
 #' 
 #' @export
 #' 
 #' @method qaqc swmpr
 qaqc.swmpr <- function(swmpr_in, 
-  qaqc_keep = 0,
+  qaqc_keep = '0',
   trace = FALSE, ...){
-  
-  ##
-  # sanity checks
-  if(!class(qaqc_keep) %in% c('numeric', 'integer', 'NULL'))
-    stop('qaqc_keep argument must be numeric or NULL')
   
   ##
   # swmpr data and attributes
@@ -63,10 +68,6 @@ qaqc.swmpr <- function(swmpr_in,
   #names of qaqc columns
   qaqc_sel <- grep('f_', names(dat), value = TRUE)
   
-  qaqc_rm <- as.numeric(seq(-5,  5))
-  qaqc_rm <- qaqc_rm[!qaqc_rm %in% qaqc_keep]
-  if(length(qaqc_rm) == 0) qaqc_keep <- NULL
-  
   # keep all if qaqc_in is NULL, otherwise process qaqc
   if(is.null(qaqc_keep)){ 
     
@@ -78,7 +79,7 @@ qaqc.swmpr <- function(swmpr_in,
     #matrix of TF values for those that don't pass qaqc
     qaqc_vec <- dat[, names(dat) %in% qaqc_sel, drop = FALSE]
     qaqc_vec <- apply(qaqc_vec, 2, 
-      function(x) grepl(paste(qaqc_rm, collapse = '|'), x)
+      function(x) !grepl(paste(qaqc_keep, collapse = '|'), x)
       )
     #replace T values with NA
     #qaqc is corrected
@@ -164,6 +165,8 @@ qaqc.swmpr <- function(swmpr_in,
 #' 
 #' @import reshape2
 #' 
+#' @concept organize
+#' 
 #' @seealso \code{\link{qaqc}}
 #' 
 #' @return Returns a \code{\link[base]{data.frame}} with columns for swmpr parameters and row counts indicating the number of observations in each parameter assigned to a flag value.
@@ -184,6 +187,8 @@ qaqcchk <- function(swmpr_in) UseMethod('qaqcchk')
 #' @rdname qaqcchk
 #' 
 #' @export
+#' 
+#' @concept organize
 #' 
 #' @method qaqcchk swmpr
 qaqcchk.swmpr <- function(swmpr_in){
@@ -224,6 +229,10 @@ qaqcchk.swmpr <- function(swmpr_in){
 #' 
 #' @export
 #' 
+#' @importFrom stats aggregate na.pass
+#' 
+#' @concept organize
+#' 
 #' @return Returns a swmpr object for nutrient data with no replicates.
 #' 
 #' @seealso \code{\link{qaqc}}
@@ -247,6 +256,8 @@ rem_reps <- function(swmpr_in, ...) UseMethod('rem_reps')
 #' @rdname rem_reps
 #' 
 #' @export
+#' 
+#' @concept organize
 #' 
 #' @method rem_reps swmpr
 rem_reps.swmpr <- function(swmpr_in, FUN = function(x) mean(x, na.rm = TRUE), ...){
@@ -307,6 +318,8 @@ rem_reps.swmpr <- function(swmpr_in, FUN = function(x) mean(x, na.rm = TRUE), ..
 #' @param ... arguments passed to other methods
 #' 
 #' @export
+#' 
+#' @concept organize
 #' 
 #' @method subset swmpr
 #' 
@@ -442,20 +455,23 @@ subset.swmpr <- function(x, subset = NULL, select = NULL,
 }
 
 ######
-#' Format a swmpr time vctor
+#' Format a swmpr time vector
 #'
 #' Create a continuous time vector at set time step for a swmpr object
 #' 
-#' @param swmpr_in input swmpr object
-#' @param timestep numeric value of time step to use in minutes
+#' @param dat_in input data object
+#' @param date_col chr string for the name of the date/time column, e.g., \code{"POSIXct"} or \code{"POSIXlt"} objects
+#' @param timestep numeric value of time step to use in minutes.  Alternatively, a chr string indicating \code{'years'}, \code{'quarters'}, \code{'months'}, \code{'days'}, or \code{'hours'} can also be used. A character input assumes 365 days in a year and 31 days in a month.
 #' @param differ numeric value defining buffer for merging time stamps to standardized time series
 #' @param ... arguments passed to or from other methods
 #' 
 #' @export
 #' 
+#' @concept organize
+#' 
 #' @import data.table
 #' 
-#' @return Returns a swmpr object for the specified time step
+#' @return Returns a data object for the specified time step
 #' 
 #' @seealso \code{\link{comb}}
 #' 
@@ -477,56 +493,102 @@ subset.swmpr <- function(x, subset = NULL, select = NULL,
 #' dat_nut <- apacpnut
 #' dat_nut <- setstep(dat_nut, timestep = 60)
 #' subset(dat_nut, rem_rows = TRUE, rem_cols = TRUE)
-setstep <- function(swmpr_in, ...) UseMethod('setstep')
+setstep <- function(dat_in, ...) UseMethod('setstep')
 
 #' @rdname setstep
 #' 
 #' @export
 #' 
+#' @concept organize
+#' 
 #' @method setstep swmpr
-setstep.swmpr <- function(swmpr_in, timestep = 15, differ= timestep/2, ...){ 
+setstep.swmpr <- function(dat_in, timestep = 15, differ= timestep/2, ...){ 
   
   # swmpr data and attributes
-  dat <- swmpr_in
-  attrs <- attributes(swmpr_in)
+  attrs <- attributes(dat_in)
+
+  # run default method
+  dat_in <- as.data.frame(dat_in)
+  out <- setstep(dat_in, date_col = 'datetimestamp', timestep = timestep, differ = differ, ...)
+
+  # back to swmpr class and exit
+  out <- swmpr(out, attrs$station)
+  return(out)
+  
+} 
+
+#' @rdname setstep
+#' 
+#' @export
+#' 
+#' @concept organize
+#' 
+#' @method setstep default
+setstep.default <- function(dat_in, date_col, timestep = 15, differ= timestep/2, ...){ 
+  
+  # convert timestep to numeric if chr input
+  if(is.character(timestep)){
+    
+    # lookup values
+    chr_stp <- c('years', 'quarters', 'months', 'weeks', 'days', 'hours')
+    mul_fac <- c(525600, 131400, 44640, 10080, 1440, 60)
+    
+    # stop if chr_stp is wrong
+    if(!timestep %in% chr_stp){
+      
+      stop(paste(
+        'Character input for timestep must be one of of the following:', 
+        paste(chr_stp, collapse = ', ')
+      ))
+      
+    }
+  
+    # otherwise lookup
+    timestep <- mul_fac[which(timestep == chr_stp)] 
+      
+  }
   
   # sanity check
   if(timestep/2 < differ) 
-    stop('Value for differ must be less than one half of timestep')
-  if('Date' %in% attrs$stamp_class) 
+    stop('Value for differ must be less than or equal to one half of timestep')
+  if('Date' %in% class(dat_in[, date_col])) 
     stop('Cannot use setstep with date class')
+  
+  # date range
+  date_rng <- range(dat_in[, date_col], na.rm = TRUE)
+  timezone <- attr(dat_in[, date_col], 'tzone')
   
   # round to nearest timestep
   dts_std <- as.POSIXct(
-    round(as.double(attrs$date_rng)/(timestep * 60)) * (timestep * 60),
+    round(as.double(date_rng)/(timestep * 60)) * (timestep * 60),
     origin = '1970-01-01',
-    tz = attrs$timezone
+    tz = timezone
     )
     
   # create continuous vector
   dts_std <- seq(dts_std[1], dts_std[2], by = timestep * 60)
-  dts_std <- data.frame(datetimestamp = dts_std)
+  dts_std <- data.frame(dts_std)
+  names(dts_std) <- date_col
   
   # convert swmpr data and standardized vector to data.table for merge
   # time_dum is vector of original times for removing outside of differ
-  mrg_dat <- dat
-  mrg_dat$time_dum <- mrg_dat$datetimestamp
-  mrg_dat <- data.table::data.table(mrg_dat, key = 'datetimestamp')
-  mrg_std <- data.table::data.table(dts_std, key = 'datetimestamp')
+  mrg_dat <- dat_in
+  mrg_dat$time_dum <- mrg_dat[, date_col]
+  mrg_dat <- data.table::data.table(mrg_dat, key = date_col)
+  mrg_std <- data.table::data.table(dts_std, key = date_col)
   
   # merge all the data  using  mrg_std as master
   mrg <- mrg_dat[mrg_std, roll = 'nearest']
   mrg <- data.frame(mrg)
   
   # set values outside of differ to NA
-  time_diff <- abs(difftime(mrg$datetimestamp, mrg$time_dum, units='secs'))
+  time_diff <- abs(difftime(mrg[, date_col], mrg$time_dum, units='secs'))
   time_diff <- time_diff >= 60 * differ
-  mrg[time_diff, !names(mrg) %in% c('datetimestamp', 'time_dum')] <- NA
+  mrg[time_diff, !names(mrg) %in% c(date_col, 'time_dum')] <- NA
   
-  # output, back to swmpr object from data.table
+  # output
   out <- data.frame(mrg)
   out <- out[, !names(out) %in% 'time_dum']
-  out <- swmpr(out, attrs$station)
   
   return(out)
 
@@ -537,14 +599,17 @@ setstep.swmpr <- function(swmpr_in, timestep = 15, differ= timestep/2, ...){
 #' 
 #' Combine swmpr data types for a station by common time series
 #' 
-#' @param ... swmpr object input from one to many
+#' @param ... input time series data objects, from one to many
+#' @param date_col chr string indicating name of the date column
 #' @param timestep numeric value of time step to use in minutes, passed to \code{setstep}
 #' @param differ numeric value defining buffer for merging time stamps to standardized time series, passed to \code{setstep}
-#' @param method chr string indicating method of combining (\code{'union'} for all dates as continuous time series, \code{'intersect'} for areas of overlap, or \code{'station'} for date ranges of a given station)
+#' @param method chr string indicating method of combining data.  Use \code{'union'} for all dates as continuous time series or \code{'intersect'} for only areas of overlap. If input is a  \code{swmpr} object, a \code{'station'} name can be used to combine by the date range of a given station, assuming there is overlap with the second station.  A numeric value can be supplied for the default method that specifies which data object to use for the date range based on order of execution in the function call.
 #' 
 #' @import data.table
 #' 
 #' @export 
+#' 
+#' @concept organize
 #' 
 #' @return Returns a combined swmpr object
 #' 
@@ -564,12 +629,16 @@ setstep.swmpr <- function(swmpr_in, timestep = 15, differ= timestep/2, ...){
 #' swmp2 <- apaebmet
 #' 
 #' ## combine nuts and wq data by union, set timestep to 120 minutes
+#' \dontrun{
 #' comb(swmp1, swmp2, timestep = 120, method = 'union')
+#' }
 comb <- function(...) UseMethod('comb')
 
 #' @rdname comb
 #' 
 #' @export
+#' 
+#' @concept organize
 #' 
 #' @method comb swmpr
 comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union'){
@@ -580,20 +649,26 @@ comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union')
   
   ##
   # sanity checks
-  if(length(all_dat) == 1)
-    stop('Input data must include more than one swmpr object')
+  
+  # remove qaqc if present
+  qaqc_cols <- unique(unlist(lapply(attrs, function(x) x$qaqc_cols)))
+  if(any(qaqc_cols)){
+    warning('QAQC columns present, removed from output')
+    all_dat <- lapply(all_dat, function(x) qaqc(x, qaqc_keep = NULL))
+  }
   
   # stop if from more than one timezone
   timezone <- unique(unlist(lapply(attrs, function(x) x$timezone)))
-    
   if(length(timezone) > 1)
     stop('Input data are from multiple timezones')
   
-  # stop of method is invalid
+  # stop if method is invalid
   stations <- unlist(lapply(attrs, function(x) x$station))
   
   if(!method %in% c('intersect', 'union', stations))
     stop('Method must be intersect, union, or station name')
+  # get index value of station name
+  if(method %in% stations) method <- which(method == stations)
 
   # stop if more than one data type
   types <- unlist(lapply(attrs, function(x) substring(x$station, 6)))
@@ -601,13 +676,55 @@ comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union')
   if(any(duplicated(types))) 
     stop('Unable to combine duplicated data types')
   
+  # convert to df for default
+  all_dat <- lapply(all_dat, function(x) data.frame(x))
+  res <- comb(all_dat, date_col = 'datetimestamp', timestep = timestep, differ = differ, method = method)
+  
+  out <- swmpr(res, stations)
+  
+  return(out)
+  
+}
+
+#' @rdname comb
+#' 
+#' @export
+#' 
+#' @concept organize
+#' 
+#' @method comb default
+comb.default <- function(..., date_col, timestep = 15, differ= timestep/2, method = 'union'){
+  
+  ##
+  # sanity checks
+
+  # create list for input data if not already
+  all_dat <- as.list(...)
+  if(!identical(all_dat, c(...)))
+    all_dat <- list(...)
+  
+  # stop if from more than one timezone
+  timezone <- lapply(all_dat, function(x) attr(x[, date_col], 'tzone'))
+  timezone <- unique(unlist(timezone))
+  if(length(timezone) > 1)
+    stop('Input data are from multiple timezones')
+  
+  # stop if incorrect input for method
+  if(is.numeric(method)){
+    if(method > length(all_dat)) 
+      stop('numeric value for method must specify an index for the input data')
+  } else {
+    if(!method %in% c('intersect', 'union'))
+      stop('character value for method must be intersect or union')
+  }
+
   ##
   # setstep applied to data before combining
-  all_dat <- lapply(all_dat, function(x) setstep(x, timestep, differ))
+  all_dat <- lapply(all_dat, function(x) setstep(x, date_col = date_col, timestep, differ))
   
   ##
   # dates
-  date_vecs <- lapply(all_dat, function(x) x$datetimestamp)
+  date_vecs <- lapply(all_dat, function(x) x[, date_col])
   
   ## 
   # date vector for combining
@@ -617,25 +734,23 @@ comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union')
     date_vec <- Reduce(method, date_vecs)
     date_vec <- as.POSIXct(date_vec, origin = '1970-01-01', tz = timezone)
     
-  # for a station
+  # for a numeric index
   } else {
     
-    sel <- unlist(lapply(attrs, function(x) x$station == method))
-    
-    date_vec <- date_vecs[sel][[1]]
+    date_vec <- all_dat[[method]][, date_col]
     
   }
     
   ##
   # merge stations by date_vec
   out <- data.table::data.table(datetimestamp = date_vec, key = 'datetimestamp')
-  
-  for(dat in all_dat){
+
+  for(dat in rev(all_dat)){ # reverse this because data are combined from back to front
     
     # set dummy time variable and parameter id for differ check
-    dat$time_dum <- dat$datetimestamp
-    dat_parms <- attr(dat, 'parameters')
-
+    dat$time_dum <- dat[, date_col]
+    dat_parms <- names(dat)[!names(dat) %in% c('time_dum', date_col)]
+    
     # merge
     dat <- data.table::data.table(dat, key = 'datetimestamp')
     out <- dat[out, roll = 'nearest']
@@ -650,10 +765,10 @@ comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union')
       
   }
 
-  # format as swmpr object, return
+  # format output, return
   out <- data.frame(out)
-  out <- swmpr(out, stations)
-  
+  names(out)[names(out) %in% 'datetimestamp'] <- date_col
+
   return(out)
   
 }

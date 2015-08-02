@@ -7,10 +7,14 @@
 #' @param FUN aggregation function, default \code{mean} with \code{na.rm = TRUE}
 #' @param params names of parameters to aggregate, default all
 #' @param aggs_out logical indicating if \code{\link[base]{data.frame}} is returned of raw data with datetimestamp formatted as aggregation period, default \code{FALSE}
-#' @param na.action function for treating missing data, default \code{na.pass}
+#' @param na.action function for treating missing data, default \code{na.pass}.  See the documentation for \code{\link[stats]{aggregate}} for options.
 #' @param ... additional arguments passed to other methods
 #' 
+#' @concept analyze
+#' 
 #' @import data.table
+#' 
+#' @importFrom stats aggregate formula na.pass
 #' 
 #' @export
 #' 
@@ -23,6 +27,7 @@
 #' @seealso \code{\link[stats]{aggregate}}
 #' 
 #' @examples
+#' \dontrun{
 #' ## get data, prep
 #' data(apacpwq)
 #' dat <- apacpwq
@@ -35,10 +40,13 @@
 #' ## omit NA data in output
 #' fun_in <- function(x)  var(x, na.rm = TRUE)
 #' aggreswmp(swmpr_in, FUN = fun_in, 'years') 
+#' }
 aggreswmp <- function(swmpr_in, ...) UseMethod('aggreswmp')
 
 #' @rdname aggreswmp
-#'
+#' 
+#' @concept analyze
+#' 
 #' @export
 #'
 #' @method aggreswmp swmpr
@@ -135,6 +143,10 @@ aggreswmp.swmpr <- function(swmpr_in, by, FUN = function(x) mean(x, na.rm = TRUE
 #' 
 #' @import data.table
 #' 
+#' @importFrom stats na.omit na.pass qt sd
+#' 
+#' @concept analyze
+#' 
 #' @export
 #' 
 #' @details The function summarizes metabolism data by averaging across set periods of observation. Confidence intervals are also returned based on the specified alpha level.  It is used within \code{\link{plot_metab}} function to view summarized metabolism results.  Data can be aggregated by \code{'years'}, \code{'quarters'}, \code{'months'}, or \code{'weeks'} for the supplied function, which defaults to the \code{\link[base]{mean}}. The method of treating NA values for the user-supplied function should be noted since this may greatly affect the quantity of data that are returned.
@@ -144,6 +156,7 @@ aggreswmp.swmpr <- function(swmpr_in, by, FUN = function(x) mean(x, na.rm = TRUE
 #' @seealso \code{\link[stats]{aggregate}}, \code{\link{aggreswmp}}, \code{\link{ecometab}}, \code{\link{plot_metab}}
 #' 
 #' @examples
+#' \dontrun{
 #' ## import water quality and weather data
 #' data(apadbwq)
 #' data(apaebmet)
@@ -158,6 +171,7 @@ aggreswmp.swmpr <- function(swmpr_in, by, FUN = function(x) mean(x, na.rm = TRUE
 #' 
 #' ## change aggregation period and alpha
 #' aggremetab(res, by = 'months', alpha = 0.1)
+#' }
 aggremetab <- function(swmpr_in, ...) UseMethod('aggremetab')
 
 #' @rdname aggremetab
@@ -224,6 +238,8 @@ aggremetab.swmpr <- function(swmpr_in, by = 'weeks', na.action = na.pass, alpha 
 #' 
 #' @param swmpr_in input swmpr object
 #' @param ... arguments passed to or from other methods
+#'  
+#' @concept analyze
 #' 
 #' @export smoother
 #' 
@@ -232,7 +248,7 @@ smoother <- function(swmpr_in, ...) UseMethod('smoother')
 
 #' @rdname smoother
 #' 
-#' @param window numeric vector of ones defining size of smoothing window, passed to \code{filter} 
+#' @param window numeric vector defining size of the smoothing window, passed to \code{filter} 
 #' @param sides numeric vector defining method of averaging, passed to \code{filter}
 #' @param params is chr string of swmpr parameters to smooth, default all
 #' 
@@ -243,6 +259,8 @@ smoother <- function(swmpr_in, ...) UseMethod('smoother')
 #' @seealso \code{\link[stats]{filter}}
 #' 
 #' @method smoother swmpr
+#' 
+#' @concept analyze
 #' 
 #' @examples
 #' ## import data
@@ -305,6 +323,8 @@ smoother.swmpr <- function(swmpr_in, window = 5, sides = 2, params = NULL, ...){
 #' @export
 #' 
 #' @method na.approx swmpr
+#' 
+#' @concept analyze
 #' 
 #' @details A common approach for handling missing data in time series analysis is linear interpolation.  A simple curve fitting method is used to create a continuous set of records between observations separated by missing data.  A required argument for the function is \code{maxgap} which defines the maximum gap size  for interpolation. The ability of the interpolated data to approximate actual, unobserved trends is a function of the gap size.  Interpolation between larger gaps are less likely to resemble patterns of an actual parameter, whereas interpolation between smaller gaps may be more likely to resemble actual patterns.  An appropriate gap size limit depends on the unique characteristics of specific datasets or parameters.  
 #' 
@@ -378,19 +398,23 @@ na.approx.swmpr <- function(object, params = NULL, maxgap, ...){
   
 }
 
-#' Simple trend decomposition of swmpr data
+#' Simple trend decomposition
 #' 
-#' Decompose swmpr data into trend, cyclical (e.g., daily, annual), and random components using \code{\link[stats]{decompose}} and \code{\link[stats]{ts}}
+#' Decompose data into trend, cyclical (e.g., daily, annual), and random components using \code{\link[stats]{decompose}} and \code{\link[stats]{ts}}
 #' 
-#' @param swmpr_in input swmpr object
+#' @param dat_in input data object
 #' @param ... arguments passed to \code{decompose}, \code{ts}, and other methods
 #' 
 #' @export decomp
 #' 
+#' @importFrom stats decompose ts
+#' 
+#' @concept analyze
+#' 
 #' @details
 #' This function is a simple wrapper to the \code{\link[stats]{decompose}} function.  The \code{decompose} function separates a time series into additive or multiplicative components describing a trend, cyclical variation (e.g., daily or annual), and the remainder.  The additive decomposition assumes that the cyclical component of the time series is stationary (i.e., the variance is constant), whereas a multiplicative decomposition accounts for non-stationarity.  By default, a moving average with a symmetric window is used to filter the cyclical component.  Alternatively, a vector of filter coefficients in reverse time order can be supplied (see \code{\link[stats]{decompose}}).  
 #' 
-#' The \code{decompose} function requires a ts object with a specified frequency.  The \code{decomp} function converts the input swmpr vector to a ts object prior to \code{decompose}.  This requires an explicit input defining the frequency in the time series required to complete a full period of the parameter.  For example, the frequency of a parameter with diurnal periodicity would be 96 if the time step is 15 minutes (4 * 24).  The frequency of a parameter with annual periodicity would be 35040 (4 * 24 * 365).  For simplicity, chr strings of \code{'daily'} or \code{'annual'} can be supplied in place of numeric values.  A starting value of the time series must be supplied in the latter case.  Use of the \code{\link{setstep}} function is required to standardize the time step prior to decomposition.  
+#' The \code{decompose} function requires a ts object with a specified frequency.  The \code{decomp} function converts the input swmpr vector to a ts object prior to \code{decompose}.  This requires an explicit input defining the frequency in the time series required to complete a full period of the parameter.  For example, the frequency of a parameter with diurnal periodicity would be 96 if the time step is 15 minutes (24 hours * 60 minutes / 15 minutes).  The frequency of a parameter with annual periodicity at a 15 minute time step would be 35040 (365 days * 24 hours * 60 minutes / 15 minutes).  For simplicity, chr strings of \code{'daily'} or \code{'annual'} can be supplied in place of numeric values.  A starting value of the time series must be supplied in the latter case.  Use of the \code{\link{setstep}} function is required to standardize the time step prior to decomposition.  
 #' 
 #' Note that the \code{decompose} function is a relatively simple approach and alternative methods should be investigated if a more sophisticated decomposition is desired.
 #'  
@@ -431,7 +455,7 @@ na.approx.swmpr <- function(object, params = NULL, maxgap, ...){
 #' ## decomposition and plot
 #' test <- decomp(dat, param = 'do_mgl', frequency = 'daily')
 #' plot(test)
-decomp <- function(swmpr_in, ...) UseMethod('decomp') 
+decomp <- function(dat_in, ...) UseMethod('decomp') 
 
 #' @rdname decomp
 #' 
@@ -440,20 +464,41 @@ decomp <- function(swmpr_in, ...) UseMethod('decomp')
 #' @param frequency chr string or numeric vector indicating the periodic component of the input parameter.  Only \code{'daily'} or \code{'annual'} are accepted as chr strings.  Otherwise a numeric vector specifies the number of observations required for a full cycle of the input parameter.  Defaults to \code{'daily'} for a diurnal parameter.
 #' @param start numeric vector indicating the starting value for the time series given the frequency.  Only required if \code{frequency} is numeric. See \code{\link[stats]{ts}}.
 #' 
+#' @concept analyze
+#' 
 #' @export
 #' 
 #' @method decomp swmpr
-decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily', start = NULL, ...){
+decomp.swmpr <- function(dat_in, param, type = 'additive', frequency = 'daily', start = NULL, ...){
   
   # attributes
-  parameters <- attr(swmpr_in, 'parameters')
-  timezone <- attr(swmpr_in, 'timezone')
-  
-  ##
-  # sanity checks
+  parameters <- attr(dat_in, 'parameters')
   
   # stop if param not in parameters
   if(!any(param %in% parameters) & !is.null(param))
+    stop('Params argument must name input columns')
+  
+  # to data frame for default
+  dat_in <- as.data.frame(dat_in)
+  
+  decomp(dat_in, param = param, date_col = 'datetimestamp', type = type, 
+    frequency = frequency, start = start)
+
+}
+
+#' @rdname decomp
+#' 
+#' @param date_col chr string of the name of the date column
+#' 
+#' @concept analyze
+#' 
+#' @export
+#' 
+#' @method decomp default
+decomp.default <- function(dat_in, param, date_col, type = 'additive', frequency = 'daily', start = NULL, ...){
+
+  # stop if param not in input data names
+  if(!param %in% names(dat_in))
     stop('Params argument must name input columns')
   
   # stop if frequency or start are incorrect
@@ -465,13 +510,16 @@ decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily'
   }
  
   # stop if time series is not standardized
-  chk_step <- unique(diff(swmpr_in$datetimestamp))
+  chk_step <- unique(diff(dat_in[, date_col]))
   if(length(chk_step) > 1)
     stop('The time step is not standardized, use setstep')
 
+  # timezone
+  timezone <- attr(dat_in[, date_col], 'tzone') 
+    
   ##
   # get frequency and starting value if input not numeric
-  start <- swmpr_in$datetimestamp[1]
+  start <- dat_in[1, date_col]
   day <- as.numeric(strftime(start, '%j', tz = timezone))
   hour <- as.numeric(strftime(start, '%H', tz = timezone))
   min <- as.numeric(strftime(start, '%M', tz = timezone))
@@ -485,7 +533,7 @@ decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily'
   }
   
   # make ts and decompose
-  ts_smp <- ts(swmpr_in[, param], start = c(1, start), frequency = frequency)
+  ts_smp <- ts(dat_in[, param], start = c(1, start), frequency = frequency)
   out <- decompose(ts_smp, type, ...)
 
   # return decompose.ts
@@ -497,10 +545,13 @@ decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily'
 #' 
 #' Decompose monthly SWMP time series into grandmean, annual, seasonal, and event series using \code{\link[wq]{decompTs}}, as described in Cloern and Jassby 2010.
 #' 
-#' @param swmpr_in input swmpr object
+#' @param dat_in input data object
 #' @param param chr string of variable to decompose
+#' @param date_col chr string indicating the name of the date column which should be a date or POSIX object.
 #' @param vals_out logical indicating of numeric output is returned, default is \code{FALSE} to return a plot.
 #' @param ... additional arguments passed to other methods, including \code{\link[wq]{decompTs}} 
+#' 
+#' @concept analyze
 #' 
 #' @return  
 #' A \code{\link[ggplot2]{ggplot}} object if \code{vals_out = TRUE} (default), otherwise a monthly time series matrix of class \code{\link[stats]{ts}}.
@@ -508,13 +559,16 @@ decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily'
 #' @details
 #' This function is a simple wrapper to the \code{\link[wq]{decompTs}} function in the wq package, also described in Cloern and Jassby (2010).  The function is similar to \code{\link{decomp.swmpr}} (which is a wrapper to \code{\link[stats]{decompose}}) with a few key differences.  The \code{\link{decomp.swmpr}} function decomposes the time series into a trend, seasonal, and random components, whereas the current function decomposes into the grandmean, annual, seasonal, and events components.  For both functions, the random or events components, respectively, can be considered anomalies that don't follow the trends in the remaining categories.  
 #' 
-#' The \code{decomp_cj} function provides only a monthly decomposition, which is appropriate for characterizing relatively long-term trends.  This approach is meant for nutrient data that are obtained on a monthly cycle.  The function will also work with continuous water quality or weather data but note that the data are first aggregated on the monthly scale before decomposition.  Accordingly, short-term variation less than one-month will be removed.  The \code{\link{decomp.swmpr}} function can be used to decompose daily variation.     
+#' The \code{decomp_cj} function provides only a monthly decomposition, which is appropriate for characterizing relatively long-term trends.  This approach is meant for nutrient data that are obtained on a monthly cycle.  The function will also work with continuous water quality or weather data but note that the data are first aggregated on the monthly scale before decomposition.  Use the \code{\link{decomp.swmpr}} function to decompose daily variation.
 #' 
 #' Additional arguments passed to \code{\link[wq]{decompTs}} can be used with \code{decomp_cj}, such as \code{startyr}, \code{endyr}, and \code{type}.  Values passed to \code{type} are \code{mult} (default) or \code{add}, referring to multiplicative or additive decomposition.  See the documentation for \code{\link[wq]{decompTs}} for additional explanation and examples.   
 #' 
 #' @export
 #' 
 #' @import ggplot2 reshape2 wq
+#' 
+#' @importFrom stats aggregate ts
+#' @importFrom utils capture.output
 #' 
 #' @seealso \code{\link[wq]{decompTs}}, \code{\link[stats]{ts}}
 #' 
@@ -541,16 +595,22 @@ decomp.swmpr <- function(swmpr_in, param, type = 'additive', frequency = 'daily'
 #' dat2 <- qaqc(apacpwq)
 #' 
 #' decomp_cj(dat2, param = 'do_mgl')
-decomp_cj <- function(swmpr_in, ...) UseMethod('decomp_cj') 
+#' 
+#' ## using the default method with a data frame
+#' dat <- data.frame(dat)
+#' decomp_cj(dat, param = 'chla_n', date_col = 'datetimestamp')
+decomp_cj <- function(dat_in, ...) UseMethod('decomp_cj') 
 
 #' @rdname decomp_cj
 #' 
 #' @export
 #' 
+#' @concept analyze
+#' 
 #' @method decomp_cj swmpr
-decomp_cj.swmpr <- function(swmpr_in, param, vals_out = FALSE, ...){
+decomp_cj.swmpr <- function(dat_in, param, vals_out = FALSE, ...){
   
-  dat <- swmpr_in
+  dat <- dat_in
   
   ## sanity checks
   parameters <- attr(dat, 'parameters')
@@ -558,10 +618,44 @@ decomp_cj.swmpr <- function(swmpr_in, param, vals_out = FALSE, ...){
   
   # monthly ts
   dat <- aggreswmp(dat, by = 'months', params = param)
-  dat_rng <- attr(dat, 'date_rng')
-  months <- data.frame(datetimestamp = seq.Date(dat_rng[1], dat_rng[2], by = 'months'))
-  dat <- merge(months, dat,  by = 'datetimestamp', all.x = T)
+  dat <- data.frame(dat)
+  decomp_cj(dat, param = param, date_col = 'datetimestamp', vals_out = vals_out, ...)
   
+}
+
+#' @rdname decomp_cj
+#' 
+#' @export
+#' 
+#' @concept analyze
+#' 
+#' @method decomp_cj default
+decomp_cj.default <- function(dat_in, param, date_col, vals_out = FALSE, ...){
+  
+  # select date column and parameter
+  dat <- dat_in[, c(date_col, param)]
+  dat[, date_col] <- as.Date(dat[, date_col])
+  
+  # check months to see if one value per month, if not then aggregate
+  chkmos <- strftime(dat[, date_col], '%m')
+  if(any(duplicated(chkmos))){
+    yrs <- strftime(dat[, date_col], '%Y')
+    mos <- strftime(dat[, date_col], '%m')
+    toagg <- paste(yrs, mos, '01', sep = '-')
+    dat[, date_col] <- toagg
+    names(dat) <- c('x', 'y')
+    dat <- aggregate(y ~ x, dat, FUN = mean, na.rm = TRUE)
+    names(dat) <- c(date_col, param)
+    dat[, date_col] <- as.Date(dat[, date_col], format = '%Y-%m-%d')
+  }
+  
+  # create a continuous month vector so decomp is on equal step
+  dat_rng <- as.Date(range(dat[, date_col], na.rm = TRUE))
+  months <- data.frame(seq.Date(dat_rng[1], dat_rng[2], by = 'months'))
+  names(months) <- date_col
+  dat <- merge(months, dat,  by = date_col, all.x = T)
+  
+  # find starting year, month to create a ts object
   year <- as.numeric(strftime(dat_rng[1], '%Y'))
   month <- as.numeric(strftime(dat_rng[1], '%m'))
   dat_mts <- ts(dat[, param], frequency = 12, start = c(year, month))
@@ -602,6 +696,10 @@ decomp_cj.swmpr <- function(swmpr_in, param, vals_out = FALSE, ...){
 #' @param ... other arguments passed to \code{par}, \code{plot.default}
 #' 
 #' @export
+#' 
+#' @importFrom stats formula
+#' 
+#' @concept analyze
 #' 
 #' @details The swmpr method for plotting is a convenience function for plotting a univariate time series.  Conventional plotting methods also work well since swmpr objects are also data frames.  See the examples for use with different methods.  
 #' 
@@ -648,6 +746,11 @@ plot.swmpr <- function(x, type = 'l', ...) {
 #' 
 #' @export
 #' 
+#' @importFrom stats formula
+#' @importFrom graphics lines
+#' 
+#' @concept analyze
+#' 
 #' @method lines swmpr
 lines.swmpr <- function(x, ...) {
     
@@ -676,6 +779,10 @@ lines.swmpr <- function(x, ...) {
 #' @details The swmpr method for histograms is a convenience function for the default histogram function.  Conventional histogram methods also work well since swmpr objects are also data frames.  The input data must contain only one parameter.
 #' 
 #' @export
+#' 
+#' @importFrom graphics hist
+#' 
+#' @concept analyze
 #' 
 #' @method hist swmpr
 #' 
@@ -720,7 +827,12 @@ hist.swmpr <- function(x, ...) {
 #' 
 #' @import ggplot2 gridExtra
 #' 
+#' @importFrom stats aggregate as.formula formula median na.pass
+#' @importFrom grDevices colorRampPalette
+#' 
 #' @export
+#' 
+#' @concept analyze
 #' 
 #' @details This function creates several graphics showing seasonal and annual trends for a given swmp parameter.  Plots include monthly distributions, monthly anomalies, and annual anomalies in multiple formats.  Anomalies are defined as the difference between the monthly or annual average from the grand mean.  Monthly anomalies are in relation to the grand mean for the same month across all years.  All data are aggregated for quicker plotting.  Nutrient data are based on monthly averages, wheras weather and water quality data are based on daily averages.  Cumulative precipitation data are based on the daily maximum.  An interactive Shiny widget is available: \url{https://beckmw.shinyapps.io/swmp_summary/}
 #' 
@@ -741,6 +853,8 @@ plot_summary <- function(swmpr_in, ...) UseMethod('plot_summary')
 #' @rdname plot_summary
 #' 
 #' @export
+#' 
+#' @concept analyze
 #' 
 #' @method plot_summary swmpr
 plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
@@ -775,9 +889,14 @@ plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
   # met is monthly, except cumprcp which is daily max
   if(grepl('met$', stat)){
     dat <- aggreswmp(swmpr_in, by = 'days', params = param)
-    cumprcp <- aggreswmp(swmpr_in, by = 'days', FUN = function(x) max(x, na.rm = T), 
-      params = 'cumprcp')
-    dat$cumprcp <- cumprcp$cumprcp
+    
+    # summarize cumprcp as max if present
+    if('cumprcp' %in% attr(swmpr_in, 'parameters')){
+      cumprcp <- aggreswmp(swmpr_in, by = 'days', FUN = function(x) max(x, na.rm = TRUE), 
+        params = 'cumprcp')
+      dat$cumprcp <- cumprcp$cumprcp
+    }
+    
   }
   
   mo_labs <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
@@ -951,6 +1070,158 @@ plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
 }
 
 ######
+#' Plot multiple SWMP time series on the same y-axis
+#' 
+#' Plot multiple SWMP time series on the same y-axis, aka overplotting
+#' 
+#' @param dat_in input data object
+#' @param date_var chr string of the name for the datetimestamp column, not required for \code{\link{swmpr}} objects 
+#' @param select chr string of variable(s) to plot, passed to \code{\link{subset}}.  This is a required argument for the default method.
+#' @param subset chr string of form 'YYYY-mm-dd HH:MM' to subset a date range. Input can be one (requires operator or two values (a range).  Passed to \code{\link{subset}}.
+#' @param operator chr string specifiying binary operator (e.g., '>', '<=') if subset is one date value, passed to \code{\link{subset}}
+#' @param ylabs chr string of labels for y-axes, default taken from \code{select} argument
+#' @param xlab chr string of label for x-axis
+#' @param cols chr string of colors to use for lines
+#' @param lty numeric indicating line types, one value for all or values for each parameter
+#' @param lwd numeric indicating line widths, one value for all or values for each parameter
+#' @param inset numeric of relative location of legend, passed to \code{\link[graphics]{legend}}
+#' @param cex numeric of scale factor for legend, passed to \code{\link[graphics]{legend}}
+#' @param xloc x location of legend, passed to \code{\link[graphics]{legend}}
+#' @param yloc y location of legend, passed to \code{\link[graphics]{legend}}
+#' @param ... additional arguments passed to \code{\link[graphics]{plot}}
+#' 
+#' @export
+#' 
+#' @concept analyze
+#' 
+#' @details One to many SWMP parameters can be plotted on the same y-axis to facilitate visual comparison.  This is commonly known as overplotting.  The building blocks of this function include \code{\link[graphics]{plot}}, \code{\link[graphics]{legend}}, \code{\link[graphics]{axis}}, and \code{\link[graphics]{mtext}}. 
+#' 
+#' @return An R plot created using base graphics
+#' 
+#' @seealso \code{\link{subset}}
+#' 
+#' @examples
+#' ## import data
+#' data(apacpwq)
+#' dat <- qaqc(apacpwq)
+#' 
+#' ## plot
+#' overplot(dat)
+#' 
+#' ## a truly heinous plot
+#' overplot(dat, select = c('depth', 'do_mgl', 'ph', 'turb'), 
+#'  subset = c('2013-01-01 0:0', '2013-02-01 0:0'), lwd = 2)
+overplot <- function(dat_in, ...) UseMethod('overplot') 
+
+#' @rdname overplot
+#' 
+#' @export
+#' 
+#' @concept analyze
+#' 
+#' @method overplot swmpr
+overplot.swmpr <- function(dat_in, select = NULL, subset = NULL, operator = NULL, ylabs = NULL, xlab = NULL, cols = NULL, lty = NULL, lwd = NULL, ...){
+  
+  # get parameters to select if null, remove qaqc cols
+  if(is.null(select)) 
+    select <- attr(dat_in, 'parameters')[c(1, 2)]
+  if(attr(dat_in, 'qaqc_cols'))
+    dat_in <- qaqc(dat_in)
+  
+  # subset based on input, convert to data frame for default method
+  toplo <- subset(dat_in, select = select, subset = subset, operator = operator)
+  toplo <- as.data.frame(toplo)  
+
+  overplot(toplo, date_var = 'datetimestamp', select = select, ylab = ylabs, xlab = xlab, cols = cols, lty = lty, lwd = lwd, ...)
+  
+}
+
+#' @rdname overplot
+#' 
+#' @export
+#' 
+#' @importFrom grDevices colorRampPalette
+#' @importFrom graphics axis axis.POSIXct legend mtext par
+#' 
+#' @concept analyze
+#' 
+#' @method overplot default
+overplot.default <- function(dat_in, date_var, select = NULL, ylabs = NULL, xlab = NULL, cols = NULL, lty = NULL, lwd = NULL, inset = -0.15, cex = 1, xloc = 'top', yloc = NULL, ...){
+  
+  if(!inherits(dat_in[, date_var], 'POSIXct')) 
+    stop('date_var must be POSIXct class')
+
+  # subset data if needed
+  dat_in <- dat_in[, c(date_var, select)]
+  
+  # fill missing arguments if not supplied
+  if(!is.null(cols) & length(cols) ==1) cols <- rep(cols, length(select))
+  if(is.null(cols))
+    cols <- colorRampPalette(gradcols())(length(select))
+  if(is.null(lwd)){
+    lwd <- rep(1, length(select))
+  } else {
+    if(length(lwd == 1)) lwd <- rep(lwd, length(select))
+  }
+  if(is.null(lty)){
+    lty <- seq(1, length(select))
+  } else {
+    if(length(lty == 1)) lty <- rep(lty, length(select))
+  }
+  if(is.null(ylabs))
+    ylabs <- select
+  if(is.null(xlab))
+    xlab <- 'DateTimeStamp'
+  
+  # x dimension extension for multiple yaxix labels
+  xext <- 4 * length(select)
+  par(mar = c(5.1, xext, 4.1, 2.1))
+  
+  toplo <- dat_in
+  
+  # base plot
+  plot(x = toplo[, date_var], y = toplo[, select[1]], type = 'n', axes = F, ylab = '', xlab = '', ...)
+  
+  # initialize starting locations for y axis and text
+  yline <- 0
+  ytxtline <- 2
+  
+  # extension limits for y axes
+  ylims <- diff(range(c(as.matrix(toplo[, select])), na.rm = TRUE))
+  
+  # plot each line
+  for(parm in seq_along(select)){
+    
+    # add line to existing empty plot
+    par(new = TRUE)
+    yvar <- toplo[, select[parm]]
+    plot(x = toplo[, date_var], y = yvar, type = 'l', axes = F, 
+      ylab = '', xlab = '', lty = lty[parm], lwd = lwd[parm], col = cols[parm])
+    
+    # add y axes and appropriate labels
+    axis(side = 2, at = c(-2 * ylims, 2 * ylims), line = yline, labels = FALSE)
+    axis(side = 2, line = yline)
+    mtext(side = 2, text = ylabs[parm], line = ytxtline)
+    
+    # bump the locations for next line
+    yline <- 3.5 + yline
+    ytxtline <- 3.5 + ytxtline
+    
+  }
+
+  # add x axis and label
+  dtrng <- as.numeric(range(toplo[, date_var], na.rm = TRUE))
+  axis.POSIXct(side = 1, x = toplo[, date_var])
+  axis(side = 1, at = c(-200 * dtrng[1], 200 * dtrng[2]), labels = FALSE)
+  mtext(side = 1, xlab, line = 2.5)
+
+  # add legend in margin
+  legend(x = xloc, y = yloc, inset = inset, cex = cex, legend = ylabs, col = cols, lty = lty, lwd = lwd, 
+    horiz = TRUE, xpd = TRUE, bty = 'n')
+  
+}
+
+######
 #' Ecosystem metabolism
 #' 
 #' Estimate ecosystem metabolism using the Odum open-water method.  Estimates of daily integrated gross production, total respiration, and net ecosystem metabolism are returned.
@@ -975,6 +1246,10 @@ plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
 #' 
 #' @import oce reshape2 wq
 #' 
+#' @importFrom stats aggregate
+#' 
+#' @concept analyze
+#'
 #' @export
 #'
 #' @details 
@@ -1003,6 +1278,7 @@ plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
 #' \code{\link{calckl}} for estimating the oxygen mass transfer coefficient used with the air-sea gas exchange model, \code{\link{comb}} for combining \code{swmpr} objects, \code{\link{metab_day}} for identifying the metabolic day for each observation in the time series, \code{\link{plot_metab}} for plotting the results, and \code{\link{aggremetab}} for aggregating the metabolism attribute.
 #' 
 #' @examples
+#' \dontrun{
 #' ## import water quality and weather data
 #' data(apadbwq)
 #' data(apaebmet)
@@ -1013,11 +1289,14 @@ plot_summary.swmpr <- function(swmpr_in, param, years = NULL, ...){
 #' ## output units in grams of oxygen
 #' res <- ecometab(dat, metab_units = 'grams')
 #' res <- attr(res, 'metabolism')
+#' }
 ecometab <- function(swmpr_in, ...) UseMethod('ecometab')
 
 #' @rdname ecometab
 #' 
 #' @export
+#' 
+#' @concept analyze
 #' 
 #' @method ecometab swmpr
 ecometab.swmpr <- function(swmpr_in, depth_val = NULL, metab_units = 'mmol', trace = FALSE, ...){
@@ -1216,6 +1495,8 @@ ecometab.swmpr <- function(swmpr_in, depth_val = NULL, metab_units = 'mmol', tra
 #'
 #' @export
 #' 
+#' @concept analyze
+#' 
 #' @import ggplot2
 #'
 #' @details 
@@ -1230,6 +1511,7 @@ ecometab.swmpr <- function(swmpr_in, depth_val = NULL, metab_units = 'mmol', tra
 #' \code{\link{aggremetab}}, \code{\link{ecometab}}
 #' 
 #' @examples
+#' \dontrun{
 #' ## import water quality and weather data
 #' data(apadbwq)
 #' data(apaebmet)
@@ -1250,11 +1532,14 @@ ecometab.swmpr <- function(swmpr_in, depth_val = NULL, metab_units = 'mmol', tra
 #'
 #' ## plot daily raw, no aesthetics
 #' plot_metab(res, by = 'days', pretty = FALSE)
+#' }
 plot_metab <- function(swmpr_in, ...) UseMethod('plot_metab')
 
 #' @rdname plot_metab
 #'
 #' @export
+#'
+#' @concept analyze
 #'
 #' @method plot_metab swmpr
 plot_metab.swmpr <- function(swmpr_in, by = 'months', alpha = 0.05, width = 10, pretty = TRUE, ...){
@@ -1303,4 +1588,71 @@ plot_metab.swmpr <- function(swmpr_in, by = 'months', alpha = 0.05, width = 10, 
     
   return(p)
   
+}
+
+#' Map a reserve
+#' 
+#' Create a map of all the stations in a reserve
+#' 
+#' @param nerr_site_id chr string of the reserve to map, first three characters used by NERRS or vector of stations to map using the first five characters
+#' @param zoom numeric value for map zoom, passed to \code{\link[ggmap]{get_map}}
+#' @param text_sz numeric value for text size of station names, passed to \code{\link[ggplot2]{geom_text}}
+#' @param text_col chr string for text color of station names, passed to \code{\link[ggplot2]{geom_text}}
+#' @param map_type chr string indicating the type of base map obtained from Google maps, values are \code{terrain} (default), \code{satellite}, \code{roadmap}, or \code{hybrid} 
+#' 
+#' @import ggmap ggplot2
+#' 
+#' @concept analyze
+#' 
+#' @export
+#' 
+#' @details This function is a simple wrapper to functions in the ggmap package which returns a map of all of the stations at a NERRS reserve.  The \code{zoom} argument may have to be chosen through trial and error depending on the spatial extent of the reserve.  A local data file included with the package is used to get the latitude and longitude values of each station.  The files includes only active stations as of January 2015.
+#' 
+#' @return A \code{\link[ggplot2]{ggplot}} object for plotting.
+#' 
+#' @seealso  \code{\link[ggmap]{get_map}}, \code{\link[ggmap]{ggmap}}, \code{\link[ggplot2]{ggplot}}
+#' 
+#' @examples
+#' ## defaults
+#' 
+#' map_reserve('jac')
+#' 
+#' ## change defaults, map a single site
+#' 
+#' map_reserve('gtmss', zoom = 15, map_type = 'satellite', 
+#'  text_col = 'lightblue')
+map_reserve <- function(nerr_site_id, zoom = 11, text_sz = 6, text_col = 'black', map_type = 'terrain'){
+  
+  # sanity check
+  if(!any(c(3, 5) %in% nchar(nerr_site_id)))
+    stop('nerr_site_id must be three or five characters')
+  
+  # subset stat_locs by reserve
+  dat_locs <- get('stat_locs')
+  stats <- paste(paste0('^', nerr_site_id), collapse = '|')
+  stats <- dat_locs[grepl(stats, dat_locs$station_code), ]
+  
+  # base map
+  mapImageData <- suppressMessages(
+    ggmap::get_map(
+      location = c(lon = mean(stats$longitude),lat = mean(stats$latitude)),
+      source = 'google',
+      maptype = map_type,
+      zoom = zoom,
+      messaging = FALSE
+      )
+    )
+  
+  # plot
+  p <- ggmap::ggmap(mapImageData,
+    extent = "panel"
+      ) + 
+    geom_text(data = stats, aes_string(x = 'longitude', y = 'latitude', 
+      label= 'station_code'), size = text_sz, colour = text_col
+      ) +
+    ylab('Latitude') +
+    xlab('Longitude')
+  
+  return(p)
+
 }
