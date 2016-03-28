@@ -315,7 +315,7 @@ rem_reps.swmpr <- function(swmpr_in, FUN = function(x) mean(x, na.rm = TRUE), ..
 #'
 #' @param x input swmpr object
 #' @param subset chr string of form 'YYYY-mm-dd HH:MM' to subset a date range.  Input can be one (requires \code{operator} or two values (a range).
-#' @param select chr string of parameters to keep
+#' @param select chr string of parameters to keep, \code{'datetimestamp'} will always be kept
 #' @param operator chr string specifiying binary operator (e.g., \code{'>'}, \code{'<='}) if subset is one date value
 #' @param rem_rows logical indicating if rows with no data are removed, default \code{FALSE}
 #' @param rem_cols is logical indicating if cols with no data are removed, default \code{FALSE}
@@ -400,9 +400,19 @@ subset.swmpr <- function(x, subset = NULL, select = NULL,
   # all if null
   if(is.null(select)) select <- names(dat)
   else{
+    
     # stop if select not in parameters
-    if(any(!select %in% parameters)) stop('select argument is invalid')
+    chks <- select %in% c('datetimestamp', parameters, paste0('f_', parameters))
+    if(any(!chks)){
+      
+      nonmtch <- which(!chks)
+      nonmtch <- paste(select[nonmtch], collapse = ', ')
+      stop(paste('select argument is invalid:', nonmtch))
+      
+    }
+    
     select <- names(dat)[names(dat) %in% c('datetimestamp', select, paste0('f_', select))]
+
   }
   
   # subset data
@@ -551,7 +561,7 @@ setstep.default <- function(dat_in, date_col, timestep = 15, differ= NULL, ...){
     timestep <- mul_fac[which(timestep == chr_stp)] 
       
   }
-  
+
   if(is.null(differ)) differ <- timestep/2
   
   # sanity check
@@ -645,7 +655,7 @@ comb <- function(...) UseMethod('comb')
 #' @concept organize
 #' 
 #' @method comb swmpr
-comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union'){
+comb.swmpr <- function(..., timestep = 15, differ= NULL, method = 'union'){
   
   # swmp objects list and attributes
   all_dat <- list(...)
@@ -697,7 +707,7 @@ comb.swmpr <- function(..., timestep = 15, differ= timestep/2, method = 'union')
 #' @concept organize
 #' 
 #' @method comb default
-comb.default <- function(..., date_col, timestep = 15, differ= timestep/2, method = 'union'){
+comb.default <- function(..., date_col, timestep = 15, differ= NULL, method = 'union'){
   
   ##
   # sanity checks
@@ -744,7 +754,31 @@ comb.default <- function(..., date_col, timestep = 15, differ= timestep/2, metho
     date_vec <- all_dat[[method]][, date_col]
     
   }
+  
+  # get default differ value, as timestep/2
+  # convert timestep to numeric if chr input
+  # this is needed for default differ
+  if(is.character(timestep) & is.null(differ)){
     
+    # lookup values
+    chr_stp <- c('years', 'quarters', 'months', 'weeks', 'days', 'hours')
+    mul_fac <- c(525600, 131400, 44640, 10080, 1440, 60)
+    
+    # stop if chr_stp is wrong
+    if(!timestep %in% chr_stp){
+      
+      stop(paste(
+        'Character input for timestep must be one of of the following:', 
+        paste(chr_stp, collapse = ', ')
+      ))
+      
+    }
+  
+    # otherwise lookup
+    differ <- mul_fac[which(timestep == chr_stp)]/2
+      
+  }
+
   ##
   # merge stations by date_vec
   out <- data.table::data.table(datetimestamp = date_vec, key = 'datetimestamp')

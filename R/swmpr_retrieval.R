@@ -305,7 +305,7 @@ single_param <- function(station_code, param, Max = 100, trace = TRUE){
 #' Import local data that were obtained from the CDMO through the zip downloads feature
 #' 
 #' @param  path chr string of full path to .csv files with raw data, can be a zipped or unzipped directory where the former must include the .zip extension
-#' @param  station_code chr string of station to import, typically 7 or 8 characters but may include full name with year, excluding file extension
+#' @param  station_code chr string of station to import, typically 7 or 8 characters including wq, nut, or met extensions, may include full name with year, excluding file extension
 #' @param  trace logical indicating if progress is sent to console, default \code{FALSE}
 #' 
 #' @concept retrieve
@@ -343,6 +343,16 @@ single_param <- function(station_code, param, Max = 100, trace = TRUE){
 #' import_local(path, 'apaebmet') 
 #' }
 import_local <- function(path, station_code, trace = FALSE){
+  
+  # add .zip if not present
+  if(file.exists(paste0(path, '.zip'))){
+      path <- paste0(path, '.zip')
+    }
+  
+  # check if file exists 
+  if(!file.exists(path)){
+    stop('Path does not exist')
+  }
   
   # check if path is zipped
   zips <- grepl('\\.zip$', path)
@@ -477,9 +487,9 @@ import_local <- function(path, station_code, trace = FALSE){
   
   # names as lower case
   names(out) <- tolower(names(out))
-  
+
   # remove date from station_code, convert to swmpr class
-  station_code <- gsub('[0-9].*$', '', station_code)
+  station_code <- gsub('[0-9]*$', '', station_code)
   out <- swmpr(out, station_code)
   
   if(trace) cat('\n\nData imported...')
@@ -487,54 +497,6 @@ import_local <- function(path, station_code, trace = FALSE){
   # return data frame
   return(out)
     
-}
-
-
-
-######
-#' Import SWMP data from Amazon web services
-#' 
-#' Import SWMP data that are stored on Amazon web services as .RData files.  Data include almost all available data from 1994 to 2014 for every SWMP station.
-#' 
-#' @param  station_code chr string of station to import, i.e., 7 or 8 characters indicating the reserve, site, and data type.  Do not include years.
-#' 
-#' @export
-#' 
-#' @concept retrieve
-#' 
-#' @return Returns a swmpr object.  
-#' 
-#' @details 
-#' This function allows quick retrieval of .RData files for all data at a single SWMP site.  It differs from the other data retrieval functions in that the raw data are downloaded from an independent remote server.  Retrieval time is much faster because the files are in binary format for quick import.  However, the data are only available up to December 2014 and may not be regularly updated.  Always use the CDMO for current data.  The data have also been pre-processed using the \code{\link{qaqc}} and \code{\link{setstep}} functions.
-#' 
-#' The files are available here: \url{https://s3.amazonaws.com/swmpalldata/}.  Files can be obtained using the function or by copying the URL to a web browser with the station name appended to the address, including the .RData file extension.  For example, \url{https://s3.amazonaws.com/swmpalldata/acebbnut.RData}.
-#' 
-#' @seealso \code{\link{import_local}}
-#' 
-#' @examples
-#' ## import a file
-#' dat <- import_remote('rkbmbwq')
-#' 
-#' head(dat)
-#' 
-#' attributes(dat)
-import_remote <- function(station_code){
-  
-  # download
-  raw_content <- paste0(
-    'https://s3.amazonaws.com/swmpalldata/',
-    station_code, 
-    '.RData'
-    )
-  raw_content <- httr::GET(raw_content)$content
-  connect <- rawConnection(raw_content)
-  load(connect)
-  wq <- get(station_code)
-  close(connect) 
-  
-  # return
-  return(wq)
-  
 }
 
 ######
