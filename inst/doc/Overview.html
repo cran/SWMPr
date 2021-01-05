@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Overview</title>
+
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+<style type="text/css">
+a.anchor-section {margin-left: 10px; visibility: hidden; color: inherit;}
+a.anchor-section::before {content: '#';}
+.hasAnchor:hover a.anchor-section {visibility: visible;}
+</style>
+<script>// Anchor sections v1.0 written by Atsushi Yasumoto on Oct 3rd, 2020.
+document.addEventListener('DOMContentLoaded', function() {
+  // Do nothing if AnchorJS is used
+  if (typeof window.anchors === 'object' && anchors.hasOwnProperty('hasAnchorJSLink')) {
+    return;
+  }
+
+  const h = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+  // Do nothing if sections are already anchored
+  if (Array.from(h).some(x => x.classList.contains('hasAnchor'))) {
+    return null;
+  }
+
+  // Use section id when pandoc runs with --section-divs
+  const section_id = function(x) {
+    return ((x.classList.contains('section') || (x.tagName === 'SECTION'))
+            ? x.id : '');
+  };
+
+  // Add anchors
+  h.forEach(function(x) {
+    const id = x.id || section_id(x.parentElement);
+    if (id === '') {
+      return null;
+    }
+    let anchor = document.createElement('a');
+    anchor.href = '#' + id;
+    anchor.classList = ['anchor-section'];
+    x.classList.add('hasAnchor');
+    x.appendChild(anchor);
+  });
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Overview</h1>
+
+
+
+<div id="marcus-w.-beck-mbecktbep.org" class="section level4">
+<h4><em>Marcus W. Beck, <a href="mailto:mbeck@tbep.org" class="email">mbeck@tbep.org</a></em></h4>
+</div>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>The System Wide Monitoring Program (<a href="https://coast.noaa.gov/digitalcoast/data/nerr.html">SWMP</a>) was implemented by the National Estuarine Research Reserve System (<a href="https://coast.noaa.gov/nerrs/">NERRS</a>) in 1995 to provide continuous monitoring data at over 140 continuous monitoring stations in 28 estuaries across the United States. SWMPr (pronounced “swamper”) is an R package for retrieving, organizing, and analyzing estuary monitoring data from SWMP. Please cite the package as follows:</p>
+<p><em>Beck MW. 2016. SWMPr: An R package for retrieving, organizing, and analyzing environmental data for estuaries. The R Journal. 8(1):219-232. <a href="https://journal.r-project.org/archive/2016-1/beck.pdf" class="uri">https://journal.r-project.org/archive/2016-1/beck.pdf</a></em></p>
+</div>
+<div id="installing-the-package" class="section level1">
+<h1>Installing the package</h1>
+<p>Install the package from CRAN as follows:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">install.packages</span>(<span class="st">&#39;SWMPr&#39;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(SWMPr)</span></code></pre></div>
+<p>The development (unstable) version of this package can be installed from Github:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">install.packages</span>(<span class="st">&#39;devtools&#39;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">library</span>(devtools)</span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="kw">install_github</span>(<span class="st">&#39;fawda123/SWMPr&#39;</span>, <span class="dt">ref =</span> <span class="st">&#39;development&#39;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="kw">library</span>(SWMPr)</span></code></pre></div>
+</div>
+<div id="using-the-package" class="section level1">
+<h1>Using the package</h1>
+<p>A manuscript describing full use of the package is available from the <a href="https://journal.r-project.org/archive/2016/RJ-2016-015/index.html">R Journal</a>. All source materials for the manuscript are available <a href="https://github.com/fawda123/swmpr_manu">here</a>. A brief description of the available functions is provided below. See help documentation for more details on each function (e.g., <code>?all_params</code>). All functions are grouped into respective categories that describe their use: retrieve, organize, and analyze. Help files for functions in each category can be viewed as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">help.search</span>(<span class="st">&#39;retrieve&#39;</span>, <span class="dt">package =</span> <span class="st">&#39;SWMPr&#39;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="kw">help.search</span>(<span class="st">&#39;organize&#39;</span>, <span class="dt">package =</span> <span class="st">&#39;SWMPr&#39;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">help.search</span>(<span class="st">&#39;analyze&#39;</span>, <span class="dt">package =</span> <span class="st">&#39;SWMPr&#39;</span>)</span></code></pre></div>
+<h3>
+Retrieve
+</h3>
+<table>
+<tr>
+<td>
+<code>all_params</code>
+</td>
+<td>
+Retrieve any number of records starting with the most recent at a given station, all parameters. Wrapper to <code>exportAllParamsXMLNew</code> function on web services.
+</td>
+</tr>
+<tr>
+<td>
+<code>all_params_dtrng</code>
+</td>
+<td>
+Retrieve records of all parameters within a given date range for a station. Optional argument for a single parameter. Wrapper to <code>exportAllParamsDateRangeXMLNew</code>.
+</td>
+</tr>
+<tr>
+<td>
+<code>import_local</code>
+</td>
+<td>
+Import files from a local path. The files must be in a specific format, specifically those returned from the CDMO using the <a href="http://cdmo.baruch.sc.edu/aqs/zips.cfm">zip downloads</a> option for a reserve.
+</td>
+</tr>
+<tr>
+<td>
+<code>import_remote</code>
+</td>
+<td>
+Import SWMP site data from a remote independent server. These files have been downloaded from CDMO, processed using functions in this package, and uploaded to an Amazon server for quicker import into R.
+</td>
+</tr>
+<tr>
+<td>
+<code>single_param</code>
+</td>
+<td>
+Retrieve any number of records for a single parameter starting with the most recent at a given station. Wrapper to <code>exportSingleParamXMLNew</code> function on web services.
+</td>
+</tr>
+<tr>
+<td>
+<code>site_codes</code>
+</td>
+<td>
+Metadata for all stations, wrapper to <code>exportStationCodesXMLNew</code> function on web services.
+</td>
+</tr>
+<tr>
+<td>
+<code>site_codes_ind</code>
+</td>
+<td>
+Metadata for all stations at a single site, wrapper to <code>NERRFilterStationCodesXMLNew</code> function on web services.
+</td>
+</tr>
+</table>
+<h3>
+Organize
+</h3>
+<table>
+<tr>
+<td>
+<code>cens_id</code>
+</td>
+<td>
+Creates additional columns in a swmpr object that identify observations below, within, or above the detection limit.
+</td>
+</tr>
+<tr>
+<td>
+<code>comb</code>
+</td>
+<td>
+Combines swmpr objects to a common time series using setstep, such as combining the weather, nutrients, and water quality data for a single station. Only different data types can be combined.
+</td>
+</tr>
+<tr>
+<td>
+<code>qaqc</code>
+</td>
+<td>
+Remove QAQC columns and remove data based on QAQC flag values for a swmpr object. Only applies if QAQC columns are present.
+</td>
+</tr>
+<tr>
+<td>
+<code>qaqcchk</code>
+</td>
+<td>
+View a summary of the number of observations in a swmpr object that are assigned to different QAQC flags used by CDMO. The output is used to inform further processing but is not used explicitly.
+</td>
+</tr>
+<tr>
+<td>
+<code>rem_reps</code>
+</td>
+<td>
+Remove replicate nutrient data that occur on the same day. The default is to average replicates.
+</td>
+</tr>
+<tr>
+<td>
+<code>setstep</code>
+</td>
+<td>
+Format data from a swmpr object to a continuous time series at a given timestep. The function is used in <code>comb</code> and can also be used with individual stations.
+</td>
+</tr>
+<tr>
+<td>
+<code>subset</code>
+</td>
+<td>
+Subset by dates and/or columns for a swmpr object. This is a method passed to the generic `subset’ function provided in the base package.
+</td>
+</tr>
+</table>
+<h3>
+Analyze
+</h3>
+<table>
+<tr>
+<td>
+<code>aggreswmp</code>
+</td>
+<td>
+Aggregate swmpr objects for different time periods - years, quarters, months, weeks, days, or hours. Aggregation function is user-supplied but defaults to mean.
+</td>
+</tr>
+<tr>
+<td>
+<code>aggremetab</code>
+</td>
+<td>
+Aggregate metabolism data from a swmpr object. This is primarily used within <code>plot_metab</code> but may be useful for simple summaries of raw daily data.
+</td>
+</tr>
+<tr>
+<td>
+<code>ecometab</code>
+</td>
+<td>
+Estimate ecosystem metabolism for a combined water quality and weather dataset using the open-water method.
+</td>
+</tr>
+<tr>
+<td>
+<code>decomp</code>
+</td>
+<td>
+Decompose a swmpr time series into trend, seasonal, and residual components. This is a simple wrapper to <code>decompose</code>. Decomposition of monthly or daily trends is possible.
+</td>
+</tr>
+<tr>
+<td>
+<code>decomp_cj</code>
+</td>
+<td>
+Decompose a swmpr time series into grandmean, annual, seasonal, and events components. This is a simple wrapper to <code>decompTs</code> in the wq package. Only monthly decomposition is possible.
+</td>
+</tr>
+<tr>
+<td>
+<code>hist</code>
+</td>
+<td>
+Plot a histogram for a swmpr object.
+</td>
+</tr>
+<tr>
+<td>
+<code>lines</code>
+</td>
+<td>
+Add lines to an existing swmpr plot.
+</td>
+</tr>
+<tr>
+<td>
+<code>map_reserve</code>
+</td>
+<td>
+Create a map of all stations in a reserve using the ggmap package.
+</td>
+</tr>
+<tr>
+<td>
+<code>na.approx</code>
+</td>
+<td>
+Linearly interpolate missing data (<code>NA</code> values) in a swmpr object. The maximum gap size that is interpolated is defined as a maximum number of records with missing data.
+</td>
+</tr>
+<tr>
+<td>
+<code>overplot</code>
+</td>
+<td>
+Plot multiple SWMP time series on the same y-axis.
+</td>
+</tr>
+<tr>
+<td>
+<code>plot</code>
+</td>
+<td>
+Plot a univariate time series for a swmpr object. The parameter name must be specified.
+</td>
+</tr>
+<tr>
+<td>
+<code>plot_metab </code>
+</td>
+<td>
+Plot ecosystem metabolism estimates after running <code>ecometab</code> on a swmpr object.
+</td>
+</tr>
+<tr>
+<td>
+<code>plot_summary</code>
+</td>
+<td>
+Create summary plots of seasonal/annual trends and anomalies for a water quality or weather parameter.
+</td>
+</tr>
+<tr>
+<td>
+<code>plot_wind</code>
+</td>
+<td>
+Create a wind rose using weather data.
+</td>
+</tr>
+<tr>
+<td>
+<code>smoother</code>
+</td>
+<td>
+Smooth swmpr objects with a moving window average. Window size and sides can be specified, passed to <code>filter</code>.
+</td>
+</tr>
+</table>
+<h3>
+Miscellaneous
+</h3>
+<table>
+<tr>
+<td>
+<code>calcKL</code>
+</td>
+<td>
+Estimate the reaeration coefficient for air-sea gas exchange. This is only used within the <code>ecometab</code> function.
+</td>
+</tr>
+<tr>
+<td>
+<code>metab_day</code>
+</td>
+<td>
+Identify the metabolic day for each approximate 24 period in an hourly time series. This is only used within the <code>ecometab</code> function.
+</td>
+</tr>
+<tr>
+<td>
+<code>param_names</code>
+</td>
+<td>
+Returns column names as a list for the parameter type(s) (nutrients, weather, or water quality). Includes QAQC columns with ‘f_’ prefix. Used internally in other functions.
+</td>
+</tr>
+<tr>
+<td>
+<code>parser</code>
+</td>
+<td>
+Parses html returned from CDMO web services, used internally in retrieval functions.
+</td>
+</tr>
+<tr>
+<td>
+<code>swmpr</code>
+</td>
+<td>
+Creates object of swmpr class, used internally in retrieval functions.
+</td>
+</tr>
+<tr>
+<td>
+<code>time_vec</code>
+</td>
+<td>
+Converts time vectors to POSIX objects with correct time zone for a site/station, used internally in retrieval functions.
+</td>
+</tr>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
