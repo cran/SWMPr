@@ -8,9 +8,11 @@
 #' @param colsmid chr string vector of length one indicating colors for middle plots
 #' @param colsright chr string vector of length three indicating colors for right plots
 #' @param years numeric vector of starting and ending years to plot, default all
+#' @param base_size numeric for text size
 #' @param plt_sep logical if a list is returned with separate plot elements
 #' @param sum_out logical if summary data for the plots is returned
-#' @param ... additional arguments passed to other methods, currently not used
+#' @param fill chr string indicating if missing monthly values are left as is (\code{'none'}, default), replaced by long term monthly averages (\code{'monoclim'}), or linearly interpolated using \code{\link[zoo]{na.approx}}
+#' @param ... additional arguments passed to other methods
 #' 
 #' @import ggplot2 gridExtra
 #' 
@@ -26,6 +28,8 @@
 #' Individual plots can be obtained if \code{plt_sep = TRUE}.  Individual plots for elements one through six in the list correspond to those from top left to bottom right in the combined plot.
 #' 
 #' Summary data for the plots can be obtained if \code{sum_out = TRUE}.  This returns a list with three data frames with names \code{sum_mo}, \code{sum_moyr}, and \code{sum_mo}.  The data frames match the plots as follows: \code{sum_mo} for the top left, bottom left, and center plots, \code{sum_moyr} for the top right and middle right plots, and \code{sum_yr} for the bottom right plot. 
+#' 
+#' Missing values can be filled using the long-term average across years for each month (\code{fill = 'monoclim'}) or as a linear interpolation between missing values using \code{\link[zoo]{na.approx}} (\code{fill = 'interp'}).  The monthly average works well for long gaps, but may not be an accurate representation of long-term trends, i.e., real averages may differ early vs late in the time series if a trend exists. The linear interpolation option is preferred for small gaps.  
 #' 
 #' @return A graphics object (Grob) of multiple \code{\link[ggplot2]{ggplot}} objects, otherwise a list of  individual \code{\link[ggplot2]{ggplot}} objects if \code{plt_sep = TRUE} or a list with data frames of the summarized data if \code{sum_out = TRUE}.
 #' 
@@ -57,12 +61,17 @@ plot_summary <- function(swmpr_in, ...) UseMethod('plot_summary')
 #' 
 #' @method plot_summary swmpr
 plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'lightgreen'), colsmid = 'lightblue', 
-                               colsright = c('lightblue', 'lightgreen', 'tomato1'), 
-                               years = NULL, plt_sep = FALSE, sum_out = FALSE, ...){
+                               colsright = c('lightblue', 'lightgreen', 'tomato1'), base_size = 11,
+                               years = NULL, plt_sep = FALSE, sum_out = FALSE, fill = c('none', 'monoclim', 'interp'), ...){
+  
+  fill <- match.arg(fill)
   
   stat <- attr(swmpr_in, 'station')
   parameters <- attr(swmpr_in, 'parameters')
   date_rng <- attr(swmpr_in, 'date_rng')
+  
+  mo_labs <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+  mo_levs <- c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
   
   # sanity checks
   if(is.null(years)){
@@ -76,6 +85,58 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
   ##
   # preprocessing
   
+  # fill na
+  if(fill == 'monoclim'){
+    
+    names(swmpr_in)[names(swmpr_in) %in% param] <- 'toest'
+    
+    swmpr_in$year <- strftime(swmpr_in$datetimestamp, '%Y')
+    swmpr_in$month <- strftime(swmpr_in$datetimestamp, '%m')
+    swmpr_in$month <- factor(swmpr_in$month, labels = mo_levs, levels = mo_levs)
+    
+    swmpr_in <- tidyr::complete(swmpr_in, year, month, fill = list(toest = NA))
+    swmpr_in <- dplyr::group_by(swmpr_in, month)
+    swmpr_in <- dplyr::mutate(swmpr_in, 
+                              toest = dplyr::case_when(
+                                is.na(toest) ~ mean(toest, na.rm = T), 
+                                T ~ toest
+                              ))
+    swmpr_in <- dplyr::ungroup(swmpr_in)
+
+    swmpr_in$datetimestamp <- as.Date(ifelse(is.na(swmpr_in$datetimestamp), 
+                                             paste(swmpr_in$year, swmpr_in$month, '01', sep = '-'), 
+                                             as.character(as.Date(swmpr_in$datetimestamp))))
+    swmpr_in <- as.data.frame(swmpr_in, stringsAsFactors = F)
+    
+    
+    names(swmpr_in)[names(swmpr_in) %in% 'toest'] <- param
+    
+    swmpr_in <- swmpr(swmpr_in, stat)
+    
+  }
+  
+  if(fill == 'interp'){
+    
+    names(swmpr_in)[names(swmpr_in) %in% param] <- 'toest'
+    
+    swmpr_in$year <- strftime(swmpr_in$datetimestamp, '%Y')
+    swmpr_in$month <- strftime(swmpr_in$datetimestamp, '%m')
+    swmpr_in$month <- factor(swmpr_in$month, labels = mo_levs, levels = mo_levs)
+    
+    swmpr_in <- tidyr::complete(swmpr_in, year, month, fill = list(toest = NA))
+    swmpr_in$datetimestamp <- as.Date(ifelse(is.na(swmpr_in$datetimestamp), 
+                                             paste(swmpr_in$year, swmpr_in$month, '01', sep = '-'), 
+                                             as.character(as.Date(swmpr_in$datetimestamp))))
+    swmpr_in <- as.data.frame(swmpr_in, stringsAsFactors = F)
+    
+    names(swmpr_in)[names(swmpr_in) %in% 'toest'] <- param
+    
+    swmpr_in <- swmpr(swmpr_in, stat)
+    
+    swmpr_in <- na.approx.swmpr(swmpr_in, maxgap = 1e10)
+    
+  }
+
   ## aggregate by averages for quicker plots
   # nuts are monthly
   if(grepl('nut$', stat)){
@@ -100,14 +161,15 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
     
   }
   
-  mo_labs <- c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
-  mo_levs <- c('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12')
   dat$year <- strftime(dat$datetimestamp, '%Y')
   dat$month <- strftime(dat$datetimestamp, '%m')
   dat$month <- factor(dat$month, labels = mo_levs, levels = mo_levs)
   
   # select years to plot
   dat_plo <- data.frame(dat[dat$year %in% seq(years[1], years[2]), ])
+  
+  # remove datetimestamp
+  dat_plo <- dat_plo[, !names(dat_plo) %in% 'datetimestamp']
   
   # label lookups
   lab_look <- list(
@@ -146,16 +208,14 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
   # monthly, annual aggs
   agg_fun <- function(x) mean(x, na.rm = T)
   form_in <- formula(paste0(param, ' ~ month'))
-  mo_agg <- aggregate(form_in, data = dat_plo[, !names(dat_plo) %in% c('datetimestamp', 'year')], FUN = agg_fun)
-  mo_agg_med <- aggregate(form_in, data = dat_plo[, !names(dat_plo) %in% c('datetimestamp', 'year')], FUN = function(x) median(x, na.rm = T))
-  form_in <- formula(paste0(param, ' ~ year'))
-  yr_agg <- aggregate(form_in, data = dat_plo[, !names(dat_plo) %in% c('datetimestamp', 'month')], FUN = agg_fun, na.action = na.pass)
-  
+  mo_agg <- aggregate(form_in, data = dat_plo[, !names(dat_plo) %in% c('year')], FUN = agg_fun)
+  mo_agg_med <- aggregate(form_in, data = dat_plo[, !names(dat_plo) %in% c('year')], FUN = function(x) median(x, na.rm = T))
+
   ##
   # plots
   
   # universal plot setting
-  my_theme <- theme(axis.text = element_text(size = 8))
+  my_theme <- theme()#axis.text = element_text(size = 8))
   
   # plot 1 - means and obs
   cols <- colorRampPalette(colsleft)(nrow(mo_agg))
@@ -164,7 +224,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
       geom_point(size = 2, alpha = 0.5, 
                  position=position_jitter(width=0.1)
       ) +
-      theme_classic() +
+      theme_classic(base_size = base_size) +
       ylab(ylab) + 
       xlab('Monthly distributions and means') +
       geom_point(data = mo_agg, aes_string(x = 'month', y = param), 
@@ -177,7 +237,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
   cols <- cols[rank(mo_agg_med[, param])]
   p2 <- suppressWarnings({ggplot(dat_plo, aes_string(x = 'month', y = param)) + 
       geom_boxplot(fill = cols) +
-      theme_classic() +
+      theme_classic(base_size = base_size) +
       ylab(ylab) + 
       xlab('Monthly distributions and medians') +
       my_theme
@@ -190,7 +250,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
       geom_histogram(aes_string(y = '..density..'), colour = colsmid, binwidth = diff(range(to_plo[, param], na.rm = T))/30) + 
       facet_grid(month ~ .) + 
       xlab(ylab) +
-      theme_bw(base_family = 'Times') + 
+      theme_bw(base_family = 'Times', base_size = base_size) + 
       theme(axis.title.y = element_blank(), axis.text.y = element_blank(), 
             axis.ticks.y = element_blank(), 
             strip.text.y = element_text(size = 8, angle = 90),
@@ -215,7 +275,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
       )  +
       scale_fill_gradient2(name = ylab,
                            low = colsright[1], mid = colsright[2], high = colsright[3], midpoint = midpt) +
-      theme_classic() +
+      theme_classic(base_size = base_size) +
       ylab('Monthly means') +
       xlab('') +
       theme(legend.position = 'top', legend.title = element_blank()) +
@@ -238,7 +298,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
       scale_fill_gradient2(name = ylab,
                            low = colsright[1], mid = colsright[2], high = colsright[3], midpoint = 0,
                            limits = c(-1 * rngs, rngs)) +
-      theme_classic() +
+      theme_classic(base_size = base_size) +
       ylab('Monthly anomalies') +
       xlab('') +
       theme(legend.position = 'top', legend.title = element_blank()) +
@@ -247,8 +307,10 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
   })
   
   # annual anomalies
-  yr_avg <- mean(yr_agg[, param], na.rm = T)
-  yr_agg$anom <- yr_agg[, param] - yr_avg
+  yr_agg <- aggregate(V1 ~ year, to_plo, function(x) mean(x, na.rm = T),
+                      na.action = na.pass)
+  yr_avg <- mean(yr_agg[, 'V1'], na.rm = T)
+  yr_agg$anom <- yr_agg[, 'V1'] - yr_avg
   p6 <- suppressWarnings({ggplot(yr_agg, 
                                  aes_string(x = 'year', y = 'anom', group = '1', fill = 'anom')) +
       geom_bar(stat = 'identity') +
@@ -256,7 +318,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
                            low = colsright[1], mid = colsright[2], high = colsright[3], midpoint = 0
       ) +
       stat_smooth(method = 'lm', se = F, linetype = 'dashed', size = 1) +
-      theme_classic() +
+      theme_classic(base_size = base_size) +
       ylab('Annual anomalies') +
       xlab('') +
       theme(legend.position = 'none') +
@@ -297,7 +359,7 @@ plot_summary.swmpr <- function(swmpr_in, param, colsleft = c('lightblue', 'light
     
     # annual summaries
     sum_yr <- yr_agg
-    names(sum_yr)[names(sum_yr) %in% param] <- 'mean'
+    names(sum_yr)[names(sum_yr) %in% 'V1'] <- 'mean'
     
     return(list(sum_mo = sum_mo, sum_moyr = sum_moyr, sum_yr = sum_yr))
     
