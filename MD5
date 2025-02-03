@@ -1,6 +1,6 @@
-49d70021662881ab6a4452ceb6112bd5 *DESCRIPTION
+205a0aa8ccdc353039c42a2712bcb1bb *DESCRIPTION
 2799e51a8808a876354a1081250ec345 *NAMESPACE
-cd66dd6b82d4bf4dcce7f9f0ab165e81 *NEWS.md
+f61eb5464badd2304fab103274da8cb5 *NEWS.md
 1067be0614dc3ca20ea49ce29365c8c7 *R/aggremetab.R
 f12d02dbceacfdf11afb1b5999498d69 *R/aggreswmp.R
 48680f7c2e323d15f58b668fcf379b0c *R/all_params.R
@@ -8,7 +8,7 @@ f6c12e720ee9562eb7234cbaaedc638f *R/all_params_dtrng.R
 f3dd8ed87db20776d81036e66a1b59aa *R/calckl.R
 d3de4958f1f0db51049f34a646efee99 *R/cens_id.R
 ccf46ee0292c731d83878f86386e0b14 *R/comb.R
-8ed273553572045dc06ecd04a1ef587b *R/decomp.R
+b88cda561e6e4af1483c5ba88ae2ca06 *R/decomp.R
 9e2d7098ed4c517cf613a93aa04857e2 *R/decompTs.R
 ed56b697f3e03a0ae1f4ad019c600cd2 *R/decomp_cj.R
 4492ae3d2457be04bcfb5dce09f4edc5 *R/ecometab.R
@@ -47,9 +47,9 @@ b99f8de69879ecc6cd06185018a82427 *R/swmpr_misc.R
 07dcaba838adf566e79a33ababc68054 *data/apaebmet.RData
 a14e5ef974e11db450eb81510f232fcc *data/stat_locs.rda
 74851c8face5e88625713bd1051d8dbb *inst/CITATION
-a943685aae63889e8ef51738ba5fdc19 *inst/doc/Overview.R
+6fffd1679a813b7c9a8f5b22f54f2052 *inst/doc/Overview.R
 235df78beef96e91f7796131a8529de1 *inst/doc/Overview.Rmd
-b7b259c217f223c3a0fc495319a11d4f *inst/doc/Overview.html
+56e3fadae54ad2b77fa07a66ca1d6639 *inst/doc/Overview.html
 11942822ef6149079f0fcb633c1b6a2f *man/aggremetab.Rd
 53d4dd6daa053dad9f0fd78fcb27c80a *man/aggreswmp.Rd
 ac7df079d099dae7a4b69c160146b5a7 *man/all_params.Rd

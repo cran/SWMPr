@@ -1,8 +1,8 @@
 Package: SWMPr
 Type: Package
 Title: Retrieving, Organizing, and Analyzing Estuary Monitoring Data
-Version: 2.5.1
-Date: 2024-06-24
+Version: 2.5.2
+Date: 2025-02-02
 Author: Marcus W. Beck [aut, cre],
   Kimberly Cressman [ctb]
 Maintainer: Marcus W. Beck <mbeck@tbep.org>
@@ -32,6 +32,6 @@ VignetteBuilder: knitr
 URL: http://fawda123.github.io/SWMPr/
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-06-24 13:13:28 UTC; MarcusBeck
+Packaged: 2025-02-03 16:59:04 UTC; MarcusBeck
 Repository: CRAN
-Date/Publication: 2024-06-24 13:50:07 UTC
+Date/Publication: 2025-02-03 17:30:04 UTC

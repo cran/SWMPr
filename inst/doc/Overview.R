@@ -7,17 +7,17 @@ knitr::opts_chunk$set(
 )
 
 ## ----eval = F, message = F----------------------------------------------------
-#  install.packages('SWMPr')
-#  library(SWMPr)
+# install.packages('SWMPr')
+# library(SWMPr)
 
 ## ----eval = F, message = F----------------------------------------------------
-#  install.packages('devtools')
-#  library(devtools)
-#  install_github('fawda123/SWMPr', ref = 'development')
-#  library(SWMPr)
+# install.packages('devtools')
+# library(devtools)
+# install_github('fawda123/SWMPr', ref = 'development')
+# library(SWMPr)
 
 ## ----eval = F, message = F----------------------------------------------------
-#  help.search('retrieve', package = 'SWMPr')
-#  help.search('organize', package = 'SWMPr')
-#  help.search('analyze', package = 'SWMPr')
+# help.search('retrieve', package = 'SWMPr')
+# help.search('organize', package = 'SWMPr')
+# help.search('analyze', package = 'SWMPr')
 
